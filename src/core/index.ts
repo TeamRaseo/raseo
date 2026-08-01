@@ -1,4 +1,3 @@
 export * from "./errors/index.js";
 export * from "./types/index.js";
 export * from "../session/index.js";
-export * from "../providers/model.provider.js";
