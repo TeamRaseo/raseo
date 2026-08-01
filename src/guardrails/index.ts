@@ -1,6 +1,7 @@
-export interface GuardrailResult {
-  passed: boolean;
-  reason?: string;
-}
-
-export type GuardrailFn = (input: unknown) => Promise<GuardrailResult> | GuardrailResult;
+export type {
+  GuardrailResult,
+  GuardrailContext,
+  AgentGuardrail,
+  ToolGuardrailHook,
+} from "../core/types/index.js";
+export { GuardrailViolationError } from "../core/errors/index.js";
