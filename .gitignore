@@ -37,3 +37,5 @@ Thumbs.db
 
 # pnpm store (optional)
 .pnpm-store/
+
+CONTEXT.md
