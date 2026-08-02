@@ -1,4 +1,5 @@
-import type { ModelProvider, ToolDefinition } from "../../core/index.js";
+import type {  ToolDefinition } from "../../core/index.js";
+import type { ModelProvider } from "../../providers/model.provider.js";
 
 export interface RuntimeOptions {
  

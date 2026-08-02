@@ -1,8 +1,6 @@
-import type {
-  ModelProvider,
-  ModelRequest,
-  ModelResponse,
-} from "../core/types/index.js";
+import type { ModelProvider } from "./model.provider.js";
+import type { ModelResponse, ModelRequest } from "./provider.types.js";
+
 
 export interface MockProviderOptions {
   name?: string;
@@ -12,12 +10,14 @@ export interface MockProviderOptions {
 
 export class MockProvider implements ModelProvider {
   readonly name: string;
+  readonly model: string;
   private responses: ModelResponse[];
   private defaultResponse: ModelResponse;
   public requests: ModelRequest[] = [];
 
   constructor(options: MockProviderOptions = {}) {
     this.name = options.name ?? "mock-provider";
+    this.model = "gpt-4o-mini"// only for test
     this.responses = [...(options.responses ?? [])];
     this.defaultResponse = options.defaultResponse ?? {
       message: { role: "assistant", content: "Mock provider response" },
@@ -26,7 +26,7 @@ export class MockProvider implements ModelProvider {
     };
   }
 
-  async generateResponse(request: ModelRequest): Promise<ModelResponse> {
+  async generate(request: ModelRequest): Promise<ModelResponse> {
     this.requests.push(request);
     if (this.responses.length > 0) {
       return this.responses.shift()!;

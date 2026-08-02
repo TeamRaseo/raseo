@@ -1,7 +1,7 @@
 import { z } from "zod";
-import type { ModelProvider } from "./provider.types.js";
 import type { ToolDefinition, GuardrailResult } from "./tool.types.js";
 import type { AgentRunContext } from "./run.types.js";
+import type { ModelProvider } from "../../providers/model.provider.js";
 
 export type InstructionResolver = string | ((context: AgentRunContext) => string | Promise<string>);
 
