@@ -1,5 +1,15 @@
-import { z } from "zod";
-import type { AgentRunContext } from "./run.types.js";
+import type { z } from "zod";
+import type { ToolCall } from "./message.types.js";
+
+export type { ToolCall };
+
+export interface ToolContext {
+  runId?: string;
+  sessionId?: string;
+  currentAgentName?: string;
+  signal?: AbortSignal;
+  metadata?: Record<string, unknown>;
+}
 
 export interface GuardrailResult {
   passed: boolean;
@@ -8,19 +18,41 @@ export interface GuardrailResult {
 
 export type ToolGuardrailHook = (
   input: unknown,
-  context: AgentRunContext
+  context?: ToolContext
 ) => Promise<GuardrailResult> | GuardrailResult;
 
-export interface Tool<TSchema extends z.ZodType = z.ZodType> {
+/**
+ * Pure contract for a tool definition.
+ */
+export interface ToolDefinition<
+  TSchema extends z.ZodType = z.ZodType,
+  TResult = unknown
+> {
   name: string;
   description: string;
-  schema: TSchema;
-  execute: (input: z.infer<TSchema>, context: AgentRunContext) => Promise<unknown> | unknown;
+  input: TSchema;
+  execute: (input: z.infer<TSchema>, context?: ToolContext) => Promise<TResult> | TResult;
   guardrail?: ToolGuardrailHook;
 }
 
-export function createTool<TSchema extends z.ZodType>(
-  tool: Tool<TSchema>
-): Tool<TSchema> {
-  return tool;
+/**
+ * Alias for ToolDefinition contract.
+ */
+export type Tool<
+  TSchema extends z.ZodType = z.ZodType,
+  TResult = unknown
+> = ToolDefinition<TSchema, TResult>;
+
+export interface ToolResult<TData = unknown> {
+  toolCallId?: string;
+  toolName: string;
+  success: boolean;
+  data?: TData;
+  error?: string;
+  rawError?: unknown;
+}
+
+export interface ToolExecutionOptions {
+  context?: ToolContext;
+  signal?: AbortSignal;
 }

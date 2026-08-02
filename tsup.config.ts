@@ -3,9 +3,10 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: {
     "index": "src/index.ts",
-    "providers/openai": "src/providers/openai.provider.ts",
-    "providers/anthropic": "src/providers/anthropic.provider.ts",
-    "providers/gemini": "src/providers/gemini.provider.ts",
+    "tool/index": "src/tool/index.ts",
+    "providers/openai": "src/providers/openai/index.ts",
+    "providers/anthropic": "src/providers/anthropic/index.ts",
+    "providers/gemini": "src/providers/gemini/index.ts",
     "session/index": "src/session/index.ts",
   },
   format: ["esm", "cjs"],

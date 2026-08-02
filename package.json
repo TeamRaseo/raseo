@@ -16,6 +16,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./tool": {
+      "types": "./dist/tool/index.d.ts",
+      "import": "./dist/tool/index.js",
+      "require": "./dist/tool/index.cjs"
+    },
     "./openai": {
       "types": "./dist/providers/openai.d.ts",
       "import": "./dist/providers/openai.js",

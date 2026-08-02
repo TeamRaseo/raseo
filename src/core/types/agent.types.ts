@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ModelProvider } from "./provider.types.js";
-import type { Tool, GuardrailResult } from "./tool.types.js";
+import type { ToolDefinition, GuardrailResult } from "./tool.types.js";
 import type { AgentRunContext } from "./run.types.js";
 
 export type InstructionResolver = string | ((context: AgentRunContext) => string | Promise<string>);
@@ -28,7 +28,7 @@ export interface AgentConfig<TOutput = unknown> {
   name: string;
   instructions: InstructionResolver;
   model: ModelProvider;
-  tools?: Tool<any>[];
+  tools?: ToolDefinition<any>[];
   handoffs?: (AgentConfig | HandoffTarget)[];
   guardrails?: {
     input?: AgentGuardrail[];
