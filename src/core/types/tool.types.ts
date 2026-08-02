@@ -25,8 +25,8 @@ export type ToolGuardrailHook = (
  * Pure contract for a tool definition.
  */
 export interface ToolDefinition<
-  TSchema extends z.ZodType = z.ZodType,
-  TResult = unknown
+  TSchema extends z.ZodTypeAny = any,
+  TResult = any
 > {
   name: string;
   description: string;
@@ -39,8 +39,8 @@ export interface ToolDefinition<
  * Alias for ToolDefinition contract.
  */
 export type Tool<
-  TSchema extends z.ZodType = z.ZodType,
-  TResult = unknown
+  TSchema extends z.ZodTypeAny = any,
+  TResult = any
 > = ToolDefinition<TSchema, TResult>;
 
 export interface ToolResult<TData = unknown> {

@@ -1,47 +1,66 @@
 import type { ToolDefinition } from "../core/types/tool.types.js";
 import type { RegisterToolOptions } from "./types.js";
+import { ToolRegistryError } from "../core/errors/tool.error.js";
 
-/**
- * Manages tool registration, lookup, and removal.
- * Does NOT execute tools.
- */
+
+
 export class ToolRegistry {
-  private tools = new Map<string, ToolDefinition<any, any>>();
+    private readonly tools = new Map<string, ToolDefinition>();
 
-  constructor(initialTools: ToolDefinition<any, any>[] = []) {
-    for (const toolDef of initialTools) {
-      this.register(toolDef);
+    constructor(initialTools: readonly ToolDefinition[] = []) {
+        this.registerMany(initialTools);
     }
-  }
 
-  register(toolDef: ToolDefinition<any, any>, options: RegisterToolOptions = {}): void {
-    if (this.tools.has(toolDef.name) && !options.override) {
-      throw new Error(`Tool '${toolDef.name}' is already registered in ToolRegistry.`);
+    register(
+        tool: ToolDefinition,
+        options: RegisterToolOptions = {}
+    ): void {
+        if (this.tools.has(tool.name) && !options.override) {
+            throw new ToolRegistryError(
+                tool.name,
+                `Tool "${tool.name}" is already registered.`
+            );
+        }
+
+        this.tools.set(tool.name, tool);
     }
-    this.tools.set(toolDef.name, toolDef);
-  }
 
-  unregister(name: string): boolean {
-    return this.tools.delete(name);
-  }
+    registerMany(
+        tools: readonly ToolDefinition[],
+        options: RegisterToolOptions = {}
+    ): void {
+        for (const tool of tools) {
+            this.register(tool, options);
+        }
+    }
 
-  get(name: string): ToolDefinition<any, any> | undefined {
-    return this.tools.get(name);
-  }
+    unregister(name: string): boolean {
+        return this.tools.delete(name);
+    }
 
-  has(name: string): boolean {
-    return this.tools.has(name);
-  }
+    has(name: string): boolean {
+        return this.tools.has(name);
+    }
 
-  getAll(): ToolDefinition<any, any>[] {
-    return Array.from(this.tools.values());
-  }
+    get(name: string): ToolDefinition | undefined {
+        return this.tools.get(name);
+    }
 
-  clear(): void {
-    this.tools.clear();
-  }
+    list(): readonly ToolDefinition[] {
+        return [...this.tools.values()];
+    }
+    get size(): number {
+        return this.tools.size;
+    }
+
+    clear(): void {
+        this.tools.clear();
+    }
 }
 
-export function createToolRegistry(initialTools?: ToolDefinition<any, any>[]): ToolRegistry {
-  return new ToolRegistry(initialTools);
+
+export function createToolRegistry(
+    initialTools: readonly ToolDefinition[] = []
+): ToolRegistry {
+    return new ToolRegistry(initialTools);
 }

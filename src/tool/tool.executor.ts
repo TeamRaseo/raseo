@@ -1,112 +1,244 @@
-import type { ToolDefinition, ToolCall, ToolResult, ToolExecutionOptions } from "../core/types/tool.types.js";
+import type {
+    ToolCall,
+    ToolContext,
+    ToolDefinition,
+    ToolExecutionOptions,
+    ToolResult,
+} from "../core/types/tool.types.js";
+
 import { ToolExecutionError } from "../core/errors/tool.error.js";
 import { ToolRegistry } from "./tool.registry.js";
+import type z from "zod";
 
 /**
- * Responsible ONLY for tool execution:
- * 1. Find tool
- * 2. Validate input against tool Zod schema
- * 3. Evaluate guardrail hook (if present)
- * 4. Execute tool logic
- * 5. Catch errors & return standardized ToolResult
+ * Executes registered tools.
+ *
+ * Responsibilities:
+ * - Resolve tools
+ * - Validate input
+ * - Run guardrails
+ * - Execute tool logic
+ * - Normalize results
+ *
+ * Does NOT:
+ * - Call LLM providers
+ * - Manage conversations
+ * - Handle retries
+ * - Perform tracing
  */
 export class ToolExecutor {
-  private registry: ToolRegistry;
+    constructor(
+        private readonly registry: ToolRegistry,
+    ) { }
 
-  constructor(registryOrTools?: ToolRegistry | ToolDefinition<any, any>[]) {
-    if (registryOrTools instanceof ToolRegistry) {
-      this.registry = registryOrTools;
-    } else {
-      this.registry = new ToolRegistry(registryOrTools ?? []);
+    getRegistry(): ToolRegistry {
+        return this.registry;
     }
-  }
-
-  getRegistry(): ToolRegistry {
-    return this.registry;
-  }
-
-  async executeCall(
-    call: ToolCall,
-    options: ToolExecutionOptions = {}
-  ): Promise<ToolResult> {
-    return this.execute(call.name, call.args, {
-      ...options,
-      toolCallId: call.id,
-    });
-  }
-
-  async execute(
-    toolName: string,
-    rawInput: unknown,
-    options: ToolExecutionOptions & { toolCallId?: string } = {}
-  ): Promise<ToolResult> {
-    const toolDef = this.registry.get(toolName);
-    const toolCallIdProp = options.toolCallId ? { toolCallId: options.toolCallId } : {};
-
-    if (!toolDef) {
-      const errorMsg = `Tool '${toolName}' not found in ToolRegistry.`;
-      return {
-        ...toolCallIdProp,
-        toolName,
-        success: false,
-        error: errorMsg,
-        rawError: new ToolExecutionError(toolName, errorMsg),
-      };
+    async executeCall(
+        call: ToolCall,
+        options: ToolExecutionOptions = {},
+    ): Promise<ToolResult> {
+        return this.execute(
+            call.name,
+            call.args,
+            {
+                ...options,
+                toolCallId: call.id,
+            },
+        );
     }
 
-    try {
-      // Step 1: Validate input against Zod schema
-      const parseResult = toolDef.input.safeParse(rawInput);
-      if (!parseResult.success) {
-        const validationErrorMsg = `Input validation failed for tool '${toolName}': ${parseResult.error.message}`;
-        return {
-          ...toolCallIdProp,
-          toolName,
-          success: false,
-          error: validationErrorMsg,
-          rawError: parseResult.error,
+    /**
+     * Execute a tool by name.
+     */
+    async execute(
+        toolName: string,
+        rawInput: unknown,
+        options: ToolExecutionOptions & {
+            toolCallId?: string;
+        } = {},
+    ): Promise<ToolResult> {
+        try {
+            const tool = this.resolveTool(toolName);
+
+            const input = this.validateInput(
+                tool,
+                rawInput,
+            );
+
+            await this.runGuardrails(
+                tool,
+                input,
+                options.context,
+            );
+
+            const data = await this.invokeTool(
+                tool,
+                input,
+                options.context,
+            );
+
+            return this.createSuccess(
+                tool.name,
+                data,
+                options.toolCallId,
+            );
+        } catch (error) {
+            return this.createFailure(
+                toolName,
+                error,
+                options.toolCallId,
+            );
+        }
+    }
+
+
+    private resolveTool<TSchema extends z.ZodTypeAny, TResult>(
+        toolName: string,
+    ): ToolDefinition {
+        const tool = this.registry.get(toolName);
+
+        if (!tool) {
+            throw new ToolExecutionError(
+                toolName,
+                "Tool is not registered.",
+            );
+        }
+
+        return tool;
+    }
+
+    /**
+     * Validate raw input against the tool schema.
+     */
+    /**
+ * Validate raw input against the tool schema.
+ */
+    private validateInput(
+        tool: ToolDefinition,
+        rawInput: unknown,
+    ): unknown {
+        const result = tool.input.safeParse(rawInput);
+
+        if (!result.success) {
+            throw new ToolExecutionError(
+                tool.name,
+                `Input validation failed.\n${result.error.message}`,
+                result.error,
+            );
+        }
+
+        return result.data;
+    }
+
+    /**
+     * Execute guardrails before tool execution.
+     */
+    /**
+  * Execute tool guardrails.
+  *
+  * Throws when a guardrail rejects execution.
+  */
+    private async runGuardrails(
+        tool: ToolDefinition,
+        input: unknown,
+        context?: ToolContext,
+    ): Promise<void> {
+        if (!tool.guardrail) {
+            return;
+        }
+
+        const result = await tool.guardrail(
+            input,
+            context,
+        );
+
+        if (!result.passed) {
+            throw new ToolExecutionError(
+                tool.name,
+                result.reason ?? "Tool guardrail rejected execution.",
+            );
+        }
+    }
+
+    /**
+     * Invoke the tool.
+     */
+    private async invokeTool(
+        tool: ToolDefinition,
+        input: unknown,
+        context?: ToolContext,
+    ): Promise<unknown> {
+        return await tool.execute(
+            input,
+            context,
+        );
+    }
+
+
+    /**
+     * Create a successful ToolResult.
+     */
+    private createSuccess(
+        toolName: string,
+        data: unknown,
+        toolCallId?: string,
+    ): ToolResult {
+        const result: ToolResult = {
+            toolName,
+            success: true,
+            data,
         };
-      }
 
-      const validatedInput = parseResult.data;
+        if (toolCallId !== undefined) {
+            result.toolCallId = toolCallId;
+        }
 
-      // Step 2: Guardrail check if provided
-      if (toolDef.guardrail) {
-        const guardrailRes = await toolDef.guardrail(validatedInput, options.context);
-        if (!guardrailRes.passed) {
-          const reason = guardrailRes.reason ?? "Guardrail check failed";
-          return {
-            ...toolCallIdProp,
+        return result;
+    }
+
+    /**
+     * Create a failed ToolResult.
+     */
+    /**
+ * Normalize execution failures.
+ */
+    private createFailure(
+        toolName: string,
+        error: unknown,
+        toolCallId?: string,
+    ): ToolResult {
+        const result: ToolResult = {
             toolName,
             success: false,
-            error: `Guardrail violation for tool '${toolName}': ${reason}`,
-            rawError: new Error(reason),
-          };
+        };
+
+        if (toolCallId !== undefined) {
+            result.toolCallId = toolCallId;
         }
-      }
 
-      // Step 3: Execute tool logic
-      const resultData = await toolDef.execute(validatedInput, options.context);
+        if (error instanceof ToolExecutionError) {
+            result.error = error.message;
+            result.rawError = error;
+            return result;
+        }
 
-      return {
-        ...toolCallIdProp,
-        toolName,
-        success: true,
-        data: resultData,
-      };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      return {
-        ...toolCallIdProp,
-        toolName,
-        success: false,
-        error: `Execution error in tool '${toolName}': ${message}`,
-        rawError: err,
-      };
+        if (error instanceof Error) {
+            result.error = error.message;
+            result.rawError = error;
+            return result;
+        }
+
+        result.error = String(error);
+        result.rawError = error;
+
+        return result;
     }
-  }
 }
 
-export function createToolExecutor(registryOrTools?: ToolRegistry | ToolDefinition<any, any>[]): ToolExecutor {
-  return new ToolExecutor(registryOrTools);
+
+export function createToolExecutor(
+    registry: ToolRegistry,
+): ToolExecutor {
+    return new ToolExecutor(registry);
 }

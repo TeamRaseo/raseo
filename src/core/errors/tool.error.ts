@@ -10,3 +10,15 @@ export class ToolExecutionError extends RaseoError {
     this.cause = cause;
   }
 }
+export class ToolRegistryError extends RaseoError {
+  readonly toolName: string;
+
+  constructor(toolName: string, message: string) {
+    super(
+      `Tool registry error for '${toolName}': ${message}`,
+      "TOOL_REGISTRY_ERROR"
+    );
+
+    this.toolName = toolName;
+  }
+}
