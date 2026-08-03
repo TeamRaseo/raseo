@@ -1,11 +1,10 @@
-import type { z } from "zod";
 import type { AssistantMessage, ChatMessage, ToolCall } from "../core/index.js";
 
 
 export interface ToolSpec {
   name: string;
   description: string;
-  parameters: z.ZodTypeAny;
+  parameters: Record<string, unknown>;
 }
 
 export interface ModelRequest {
@@ -13,8 +12,7 @@ export interface ModelRequest {
 
   tools?: readonly ToolSpec[];
 
-  outputSchema?: z.ZodTypeAny;
-
+  outputSchema?: Record<string, unknown>;
   temperature?: number;
 
   maxTokens?: number;

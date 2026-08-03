@@ -25,7 +25,7 @@ export interface UserMessage {
 export interface ToolCall {
   id: string;
   name: string;
-  args: Record<string, unknown>;
+  arguments: Record<string, unknown>;
 }
 
 export interface AssistantMessage {
