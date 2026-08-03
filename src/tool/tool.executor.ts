@@ -40,7 +40,7 @@ export class ToolExecutor {
     ): Promise<ToolResult> {
         return this.execute(
             call.name,
-            call.args,
+            call.arguments,
             {
                 ...options,
                 toolCallId: call.id,

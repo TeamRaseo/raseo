@@ -1,18 +1,34 @@
 import OpenAI from "openai";
+
+import type {
+  Response,
+} from "openai/resources/responses/responses.js";
+
 import { BaseModelProvider } from "../base.model.provider.js";
+
 import type { ProviderConfig } from "../provider.config.js";
-import type { FinishReason, ModelRequest, ModelResponse, TokenUsage } from "../provider.types.js";
-import type { Response, ResponseCreateParams } from "openai/resources/responses/responses.js";
-import type { ToolCall } from "../../core/index.js";
 
+import type {
+  ModelRequest,
+  ModelResponse,
+} from "../provider.types.js";
 
+import { OpenAIMapper } from "./openai.mapper.js";
 
+/**
+ * OpenAI implementation backed by the Responses API.
+ */
 export class OpenAIProvider extends BaseModelProvider {
+
   readonly name = "openai";
 
   protected readonly client: OpenAI;
 
-  constructor(config: ProviderConfig) {
+  protected readonly mapper: OpenAIMapper;
+
+  constructor(
+    config: ProviderConfig,
+  ) {
     super(config);
 
     this.client = new OpenAI({
@@ -23,10 +39,12 @@ export class OpenAIProvider extends BaseModelProvider {
       maxRetries: config.maxRetries,
       defaultHeaders: config.headers,
     });
+
+    this.mapper = new OpenAIMapper();
   }
 
   /**
-   * Generates a response using the OpenAI Responses API.
+   * Generates a model response.
    */
   async generate(
     request: ModelRequest,
@@ -34,101 +52,46 @@ export class OpenAIProvider extends BaseModelProvider {
     this.validateRequest(request);
 
     try {
-      const response = await this.createResponse(request);
+      const response =
+        await this.invokeModel(request);
 
       return this.handleResponse(response);
+
     } catch (error) {
       this.normalizeError(error);
     }
   }
 
-  
-  protected async createResponse(
+  /**
+   * Sends a request to OpenAI.
+   */
+  protected async invokeModel(
     request: ModelRequest,
   ): Promise<Response> {
-    const response = await this.client.responses.create({
-      model: this.model,
 
-      input: this.getMessages(request),
+    const openAIRequest =
+      this.mapper.toRequest(
+        request,
+        this.model,
+        this.resolveTemperature(request.temperature),
+        this.resolveMaxTokens(request.maxTokens),
+      );
 
-      temperature: this.resolveTemperature(
-        request.temperature,
-      ),
-
-      max_output_tokens: this.resolveMaxTokens(
-        request.maxTokens,
-      ),
-    } satisfies ResponseCreateParams);
-
-    return response;
+    return this.client.responses.create(
+      openAIRequest,
+    );
   }
 
   /**
-   * Converts an OpenAI response into a ModelResponse.
+   * Converts the provider response into the SDK response.
    */
   protected handleResponse(
     response: Response,
   ): ModelResponse {
-    return this.attachMetadata({
-      message: this.toAssistantMessage(response),
 
-      // toolCalls: this.toToolCalls(response),
-
-      finishReason: this.toFinishReason(response),
-
-      // usage: this.toTokenUsage(response),
-    });
+    return this.attachMetadata(
+      this.mapper.toModelResponse(response),
+    );
   }
 
-  private toAssistantMessage(
-    response: Response,
-  ): ModelResponse["message"] {
-    return {
-      role: "assistant",
-      content: response.output_text ?? "",
-    };
-  }
-  private toFinishReason(
-    response: Response,
-  ): FinishReason {
-    switch (response.status) {
-      case "completed":
-        return "stop";
-
-      case "failed":
-        return "error";
-
-      case "incomplete":
-        return "length";
-
-      case "cancelled":
-        return "error";
-
-      case "queued":
-      case "in_progress":
-        return "error";
-
-      default:
-        return "stop";
-    }
-  }
-
-  private toTokenUsage(
-    response: Response,
-  ): TokenUsage | undefined {
-    if (!response.usage) {
-      return undefined;
-    }
-
-    return {
-      promptTokens: response.usage.input_tokens,
-      completionTokens: response.usage.output_tokens,
-      totalTokens: response.usage.total_tokens,
-    };
-  }
-  private toToolCalls(
-    _response: Response,
-  ): ToolCall[] | undefined {
-    return undefined;
-  }
 }

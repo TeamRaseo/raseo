@@ -46,7 +46,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup --format esm,cjs --dts --clean",
+    "build": "tsup",
     "dev": "tsup src/index.ts --watch",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/**/*.test.ts"

@@ -31,7 +31,7 @@ export interface ToolCall {
 export interface AssistantMessage {
   role: "assistant";
   content?: string | null;
-  toolCalls?: ToolCall[];
+  toolCalls?: readonly ToolCall[];
 }
 
 export interface ToolResponseMessage {
