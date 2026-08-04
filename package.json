@@ -49,7 +49,7 @@
     "build": "tsup",
     "dev": "tsup src/index.ts --watch",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test \"tests/**/*.test.ts\""
+    "test": "node scripts/test.js"
   },
   "repository": {
     "type": "git",
