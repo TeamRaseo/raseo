@@ -26,12 +26,14 @@ export interface ToolCall {
   id: string;
   name: string;
   arguments: Record<string, unknown>;
+  rawFunctionCall?: Record<string, unknown>;
 }
 
 export interface AssistantMessage {
   role: "assistant";
   content?: string | null;
   toolCalls?: readonly ToolCall[];
+  rawParts?: readonly unknown[];
 }
 
 export interface ToolResponseMessage {
