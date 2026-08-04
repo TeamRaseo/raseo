@@ -1,4 +1,4 @@
-import type { AssistantMessage, ChatMessage, ToolCall } from "../core/index.js";
+import type { AssistantMessage, ChatMessage, ToolCall, ToolDefinition } from "../core/index.js";
 
 
 export interface ToolSpec {
@@ -10,7 +10,7 @@ export interface ToolSpec {
 export interface ModelRequest {
   messages: readonly ChatMessage[];
 
-  tools?: readonly ToolSpec[];
+  tools?: readonly (ToolSpec | ToolDefinition)[];
 
   outputSchema?: Record<string, unknown>;
   temperature?: number;
@@ -19,6 +19,7 @@ export interface ModelRequest {
 
   signal?: AbortSignal;
 }
+
 
 
 export type FinishReason =
@@ -57,3 +58,48 @@ export interface ModelResponse {
 
   metadata?: ProviderMetadata;
 }
+
+export type ModelStreamChunkType =
+  | "text-delta"
+  | "tool-call-delta"
+  | "finish"
+  | "error";
+
+export interface TextDeltaChunk {
+  type: "text-delta";
+  textDelta: string;
+}
+
+export interface ToolCallDeltaChunk {
+  type: "tool-call-delta";
+  toolCallIndex: number;
+  id?: string;
+  name?: string;
+  argumentsDelta?: string;
+}
+
+export interface FinishChunk {
+  type: "finish";
+  finishReason: FinishReason;
+  usage?: TokenUsage;
+  metadata?: ProviderMetadata;
+}
+
+export interface ErrorChunk {
+  type: "error";
+  error: Error;
+}
+
+export type ModelStreamChunk =
+  | TextDeltaChunk
+  | ToolCallDeltaChunk
+  | FinishChunk
+  | ErrorChunk;
+
+/**
+ * Stream response object returned when streaming.
+ */
+export interface ModelStreamResponse extends AsyncIterable<ModelStreamChunk> {
+  textStream: AsyncIterable<string>;
+  response: Promise<ModelResponse>;
+}

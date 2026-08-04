@@ -1,4 +1,5 @@
 import type { ChatMessage } from "../../core/index.js";
+import type { TokenUsage } from "../../providers/provider.types.js";
 
 export interface RuntimeResult {
   success: boolean;
@@ -8,15 +9,8 @@ export interface RuntimeResult {
 }
 
 export interface RuntimeMetadata {
-
   runId: string;
   duration: number;
   iterations: number;
   usage?: TokenUsage;
-}
-
-export interface TokenUsage {
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
 }

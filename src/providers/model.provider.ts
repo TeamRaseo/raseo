@@ -1,4 +1,4 @@
-import type { ModelRequest, ModelResponse } from "./provider.types.js";
+import type { ModelRequest, ModelResponse, ModelStreamResponse } from "./provider.types.js";
 
 
 /**
@@ -12,4 +12,8 @@ export interface ModelProvider {
   generate(
     request: ModelRequest,
   ): Promise<ModelResponse>;
-}
+
+  stream(
+    request: ModelRequest,
+  ): Promise<ModelStreamResponse>;
+}

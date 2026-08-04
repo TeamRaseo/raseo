@@ -16,6 +16,8 @@ import type {
     ToolCall,
 } from "../../core/types/message.types.js";
 
+import type { ToolDefinition } from "../../core/types/tool.types.js";
+
 import type {
     FinishReason,
     ModelRequest,
@@ -23,6 +25,9 @@ import type {
     TokenUsage,
     ToolSpec,
 } from "../provider.types.js";
+
+
+import { toToolSpec } from "../../tool/tool.js";
 
 //   OpenAIMapper converts between Raseo internal types and OpenAI SDK (Responses API) types.
 
@@ -187,20 +192,23 @@ export class OpenAIMapper {
     }
 
     /**
-     * Converts ToolSpec into OpenAI tool definitions.
+     * Converts ToolSpec or ToolDefinition into OpenAI tool definitions.
      */
-    private toTools(tools?: readonly ToolSpec[]): Tool[] | undefined {
+    private toTools(tools?: readonly (ToolSpec | ToolDefinition)[]): Tool[] | undefined {
         if (!tools || tools.length === 0) {
             return undefined;
         }
 
-        return tools.map((tool) => ({
-            type: "function",
-            name: tool.name,
-            description: tool.description,
-            parameters: tool.parameters,
-            strict: null,
-        }));
+        return tools.map((toolInput) => {
+            const tool = toToolSpec(toolInput);
+            return {
+                type: "function",
+                name: tool.name,
+                description: tool.description,
+                parameters: tool.parameters,
+                strict: null,
+            };
+        });
     }
 
 

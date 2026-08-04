@@ -6,6 +6,7 @@ import type { ProviderConfig } from "./provider.config.js";
 import type {
     ModelRequest,
     ModelResponse,
+    ModelStreamResponse,
     ProviderMetadata,
 } from "./provider.types.js";
 
@@ -25,6 +26,11 @@ export abstract class BaseModelProvider implements ModelProvider {
     abstract generate(
         request: ModelRequest,
     ): Promise<ModelResponse>;
+
+    abstract stream(
+        request: ModelRequest,
+    ): Promise<ModelStreamResponse>;
+
 
 
     /**
