@@ -170,36 +170,79 @@ Use `runAgent` (or `AgentRuntime`) to run multi-turn agent execution loops. The 
 import { tool, runAgent } from "raseo-sdk";
 import { OpenAIProvider } from "raseo-sdk/openai";
 import { z } from "zod";
+import "dotenv/config"
 
-const weatherTool = tool({
-  name: "get_weather",
-  description: "Get current weather for a city",
-  input: z.object({
-    city: z.string().describe("City name"),
-  }),
-  async execute({ city }) {
-    return { city, temperature: 22, condition: "Sunny" };
-  },
+
+const inputSchema = z.object({
+  city: z.string().describe("City name"),
 });
 
+type Input = z.infer<typeof inputSchema>;
+
+const weatherTool = {
+  name: "get_weather",
+  description: "Get current weather for a city",
+  input: inputSchema,
+  async execute({ city }: Input) {
+    // Step 1: Geocode city → lat/lon
+    const geoRes = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`
+    );
+    const geoData = await geoRes.json();
+    if (!geoData.results || geoData.results.length === 0) {
+      throw new Error(`Could not find coordinates for city: ${city}`);
+    }
+    const { latitude, longitude } = geoData.results[0];
+
+    // Step 2: Fetch current weather
+    const weatherRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
+    );
+    const weatherData = await weatherRes.json();
+
+    const { temperature, weathercode } = weatherData.current_weather;
+
+    // Step 3: Map weather code → condition string
+    const conditionMap: Record<number, string> = {
+      0: "Clear sky",
+      1: "Mainly clear",
+      2: "Partly cloudy",
+      3: "Overcast",
+      45: "Fog",
+      48: "Depositing rime fog",
+      51: "Light drizzle",
+      61: "Slight rain",
+      71: "Slight snow fall",
+      80: "Rain showers",
+    };
+
+    return {
+      city,
+      temperature,
+      condition: conditionMap[weathercode] || "Unknown",
+    };
+  },
+};
+
+
+
 const provider = new OpenAIProvider({
-  apiKey: process.env.OPENAI_API_KEY!,
-  model: "gpt-4o-mini",
+    apiKey: process.env.OPENAI_KEY!,
+    model: "gpt-4o-mini",
 });
 
 // Automatically runs LLM -> executes tools -> feeds results -> returns final answer
 const result = await runAgent(
-  {
-    name: "WeatherAssistant",
-    instructions: "You are a helpful assistant. Use tools to answer user questions.",
-    model: provider,
-    tools: [weatherTool],
-  },
-  "What is the weather in Tokyo?"
+    {
+        name: "WeatherAssistant",
+        instructions: "You are a helpful assistant. Use tools to answer user questions.",
+        model: provider,
+        tools: [weatherTool],
+    },
+    "What is the weather in Delhi?"
 );
 
 console.log("Final Answer:", result.output);
-// Output: "The weather in Tokyo is currently 22°C and sunny."
 console.log("Turns Executed:", result.turnCount);
 ```
 
