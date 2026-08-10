@@ -9,8 +9,8 @@
 ## Key Features
 
 - **OpenAI Provider (Responses API)**: Full support for non-streaming (`generate()`) and real-time streaming (`stream()`) responses backed by OpenAI's Responses API.
-- **Anthropic Provider (@anthropic-ai/sdk)**: Full support for Anthropic Claude models (e.g. `claude-3-5-sonnet-20241022`, `claude-3-opus-20240229`) with identical `generate()`, `stream()`, multi-modal content, and tool calling interface.
-- **Gemini Provider (@google/genai)**: Full support for Google Gemini models (e.g. `gemini-2.5-flash`, `gemini-1.5-pro`) with identical `generate()`, `stream()`, multi-modal content, and tool calling interface.
+- **Anthropic Provider (@anthropic-ai/sdk)**: Full support for Anthropic Claude models (e.g. `claude-sonnet-4-6`) with identical `generate()`, `stream()`, multi-modal content, and tool calling interface.
+- **Gemini Provider (@google/genai)**: Full support for Google Gemini models (e.g. `gemini-3.5-flash`) with identical `generate()`, `stream()`, multi-modal content, and tool calling interface.
 - **Real-Time Response Streaming**: Stream text chunks (`textStream`), typed deltas (`text-delta`, `tool-call-delta`, `finish`), and await the final `ModelResponse` with full token usage metadata across all providers.
 - **Type-Safe Tool System**: Define tools using `tool()` with Zod schema validation, featuring automatic TypeScript input type inference and Zod-to-JSON-Schema parameter conversion.
 - **Automated Agent Reasoning Loop (`runAgent`)**: Multi-turn agent runtime (`AgentRuntime`) that automatically resolves system instructions, calls the LLM, executes tools via `ToolExecutor`, feeds results back, and returns the final answer.
@@ -76,8 +76,9 @@ import { AnthropicProvider } from "raseo-sdk/anthropic";
 
 const provider = new AnthropicProvider({
   apiKey: process.env.ANTHROPIC_API_KEY!,
-  model: "claude-3-5-sonnet-20241022",
+  model: "claude-sonnet-4-6",  
 });
+
 
 const response = await provider.generate({
   messages: [
@@ -99,7 +100,7 @@ import { GeminiProvider } from "raseo-sdk/gemini";
 
 const provider = new GeminiProvider({
   apiKey: process.env.GEMINI_API_KEY!,
-  model: "gemini-2.5-flash",
+  model: "gemini-3.5-flash",
 });
 
 const response = await provider.generate({
@@ -151,7 +152,7 @@ import { AnthropicProvider } from "raseo-sdk/anthropic";
 
 const provider = new AnthropicProvider({
   apiKey: process.env.ANTHROPIC_API_KEY!,
-  model: "claude-3-5-sonnet-20241022",
+  model: "claude-sonnet-4-6",
 });
 
 const streamResult = await provider.stream({
@@ -174,7 +175,7 @@ import { GeminiProvider } from "raseo-sdk/gemini";
 
 const provider = new GeminiProvider({
   apiKey: process.env.GEMINI_API_KEY!,
-  model: "gemini-2.5-flash",
+  model: "gemini-3.5-flash",
 });
 
 const streamResult = await provider.stream({
@@ -225,7 +226,7 @@ const weatherTool = tool({
 // 2. Pass tool definitions directly into OpenAIProvider, AnthropicProvider, or GeminiProvider!
 const anthropicProvider = new AnthropicProvider({
   apiKey: process.env.ANTHROPIC_API_KEY!,
-  model: "claude-3-5-sonnet-20241022",
+  model: "claude-sonnet-4-6",
 });
 
 const response = await anthropicProvider.generate({
@@ -383,7 +384,7 @@ const weatherTool = {
 
 const provider = new AnthropicProvider({
   apiKey: process.env.ANTHROPIC_API_KEY!,
-  model: "claude-3-5-sonnet-20241022",
+  model: "claude-sonnet-4-6",
 });
 
 // Automatically runs LLM -> executes tools -> feeds results -> returns final answer
