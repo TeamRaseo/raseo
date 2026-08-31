@@ -1,0 +1,71 @@
+---
+title: Providers Overview
+description: The unified model provider abstraction across OpenAI, Anthropic, and Google Gemini.
+---
+
+# Unified Model Providers
+
+At the core of `raseo-sdk` is the `ModelProvider` interface. It decouples agent reasoning and tool calling from vendor-specific payload shapes.
+
+---
+
+## The `ModelProvider` Contract
+
+Every provider in `raseo-sdk` implements the exact same interface:
+
+```typescript
+export interface ModelProvider {
+  readonly name: string;
+  readonly model: string;
+
+  generate(request: ModelRequest): Promise<ModelResponse>;
+  stream(request: ModelRequest): Promise<ModelStreamResponse>;
+}
+```
+
+---
+
+## Standardized `ModelRequest`
+
+Regardless of whether you are targeting OpenAI, Anthropic, or Gemini, requests share a single schema:
+
+```typescript
+export interface ModelRequest {
+  messages: ChatMessage[];
+  tools?: (ToolSpec | ToolDefinition)[];
+  temperature?: number;
+  maxTokens?: number;
+  signal?: AbortSignal;
+  outputSchema?: Record<string, unknown>;
+}
+```
+
+---
+
+## Standardized `ModelResponse`
+
+All providers return a consistent `ModelResponse`:
+
+```typescript
+export interface ModelResponse {
+  message: AssistantMessage;
+  finishReason: "stop" | "tool_calls" | "length" | "content_filter" | "unknown";
+  usage?: TokenUsage;
+  toolCalls?: ToolCall[];
+  metadata?: ProviderMetadata;
+}
+
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+```
+
+---
+
+## Available Providers
+
+- [OpenAI Provider (Responses API)](/docs/providers/openai) - `raseo-sdk/openai`
+- [Anthropic Provider (Claude)](/docs/providers/anthropic) - `raseo-sdk/anthropic`
+- [Google Gemini Provider (GenAI)](/docs/providers/gemini) - `raseo-sdk/gemini`

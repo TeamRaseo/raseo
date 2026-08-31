@@ -1,0 +1,108 @@
+---
+title: Running Agents (runAgent)
+description: The autonomous multi-turn reasoning loop that drives agent interactions in raseo-sdk.
+---
+
+# Running Agents (`runAgent`)
+
+`runAgent()` is the primary entry point for executing multi-turn agent interactions in `raseo-sdk`. It automates the full loop:
+
+1. Resolves instructions and prepares initial messages.
+2. Calls the model provider (`provider.generate()`).
+3. If tool calls are returned, executes them using `ToolExecutor`.
+4. Appends tool results as `role: "tool"` messages.
+5. Repeats until the model provides a final textual answer or `maxTurns` is reached.
+
+---
+
+## Function Signature
+
+```typescript
+import { runAgent } from "raseo-sdk";
+
+const result = await runAgent(
+  config: AgentConfig,
+  input: string | readonly ChatMessage[],
+  options?: {
+    maxTurns?: number;     // Maximum reasoning turns (default: 10)
+    signal?: AbortSignal;  // Cancellation token
+    sessionId?: string;    // Persistent session identifier
+  }
+): Promise<AgentRunResult>;
+```
+
+---
+
+## Return Value (`AgentRunResult`)
+
+```typescript
+export interface AgentRunResult {
+  output: string;               // Final text response from the assistant
+  messages: ChatMessage[];       // Complete conversation history including tool calls & results
+  turnCount: number;             // Total loop iterations executed
+  finalAgentName: string;        // Name of the agent that produced the final output
+}
+```
+
+---
+
+## Complete Multi-Turn Example
+
+```typescript
+import { tool, runAgent } from "raseo-sdk";
+import { OpenAIProvider } from "raseo-sdk/openai";
+import { z } from "zod";
+
+// Define calculation tool
+const multiplyTool = tool({
+  name: "multiply",
+  description: "Multiply two numbers together",
+  input: z.object({
+    a: z.number().describe("First factor"),
+    b: z.number().describe("Second factor"),
+  }),
+  execute: ({ a, b }) => ({ product: a * b }),
+});
+
+const provider = new OpenAIProvider({
+  apiKey: process.env.OPENAI_API_KEY!,
+  model: "gpt-4o-mini",
+});
+
+const result = await runAgent(
+  {
+    name: "MathBot",
+    instructions: "You are a math tutor. Always calculate using tools.",
+    model: provider,
+    tools: [multiplyTool],
+  },
+  "What is 123 multiplied by 456?",
+  { maxTurns: 5 }
+);
+
+console.log("Answer:", result.output);
+console.log("Turns:", result.turnCount); // 2 (Turn 1: tool call, Turn 2: final answer)
+```
+
+---
+
+## Handling Cancellation (`AbortSignal`)
+
+You can abort a running agent execution at any time using standard `AbortController`:
+
+```typescript
+const controller = new AbortController();
+
+// Abort after 5 seconds
+setTimeout(() => controller.abort(), 5000);
+
+try {
+  const result = await runAgent(agentConfig, "Perform deep analysis...", {
+    signal: controller.signal,
+  });
+} catch (err: any) {
+  if (err.name === "AbortError") {
+    console.log("Agent execution was cancelled.");
+  }
+}
+```

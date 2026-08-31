@@ -34,8 +34,18 @@ Thumbs.db
 
 # Turbo (if you use it later)
 .turbo/
+# Vercel
+.vercel/
+
 
 # pnpm store (optional)
 .pnpm-store/
+
+# Next.js & Fumadocs
+.next/
+out/
+.source/
+
+
 
 CONTEXT.md

@@ -1,0 +1,90 @@
+---
+title: Real-Time Response Streaming
+description: Stream tokens and tool deltas with unified streaming ergonomics across all providers.
+---
+
+# Real-Time Response Streaming
+
+Every provider in `raseo-sdk` implements `.stream(request)` returning a unified `ModelStreamResponse`.
+
+---
+
+## `ModelStreamResponse` Interface
+
+```typescript
+export interface ModelStreamResponse {
+  // 1. High-level text chunk stream
+  readonly textStream: AsyncIterable<string>;
+
+  // 2. Typed event chunk stream
+  readonly stream: AsyncIterable<ModelStreamChunk>;
+
+  // 3. Accumulated final response promise
+  readonly response: Promise<ModelResponse>;
+}
+```
+
+---
+
+## 1. High-Level Text Streaming (`textStream`)
+
+The simplest and most common way to stream assistant tokens:
+
+```typescript
+import { OpenAIProvider } from "raseo-sdk/openai";
+
+const provider = new OpenAIProvider({
+  apiKey: process.env.OPENAI_API_KEY!,
+  model: "gpt-4o-mini",
+});
+
+const streamResult = await provider.stream({
+  messages: [{ role: "user", content: "Write a short poem about the ocean." }],
+});
+
+for await (const text of streamResult.textStream) {
+  process.stdout.write(text);
+}
+
+// Await accumulated response metadata
+const final = await streamResult.response;
+console.log("\nFinished because:", final.finishReason);
+console.log("Tokens used:", final.usage?.totalTokens);
+```
+
+---
+
+## 2. Typed Delta Events (`stream`)
+
+If your UI needs to react to typed event chunks (e.g. distinguishing text chunks from tool call deltas):
+
+```typescript
+for await (const chunk of streamResult.stream) {
+  switch (chunk.type) {
+    case "text-delta":
+      console.log("Text delta:", chunk.text);
+      break;
+
+    case "tool-call-delta":
+      console.log("Tool call delta:", chunk.toolCall);
+      break;
+
+    case "finish":
+      console.log("Stream completed. Reason:", chunk.finishReason);
+      if (chunk.usage) {
+        console.log("Usage:", chunk.usage);
+      }
+      break;
+  }
+}
+```
+
+---
+
+## Zero Provider Differences
+
+Whether you invoke `OpenAIProvider`, `AnthropicProvider`, or `GeminiProvider`, the streaming interface and guarantees remain identical:
+
+- Same `textStream` async iteration.
+- Same typed event shapes.
+- Same final `.response` promise resolving token usage metrics.

@@ -1,0 +1,63 @@
+---
+title: AgentRuntime Class
+description: Low-level class controlling turn-by-turn execution and runtime lifecycle.
+---
+
+# `AgentRuntime` Class
+
+While `runAgent()` is a convenient helper for one-off invocations, the `AgentRuntime` class gives you direct control over the agent instance and enables class-based architectural patterns.
+
+---
+
+## Import
+
+```typescript
+import { AgentRuntime } from "raseo-sdk";
+```
+
+---
+
+## Usage
+
+```typescript
+import { AgentRuntime, tool } from "raseo-sdk";
+import { AnthropicProvider } from "raseo-sdk/anthropic";
+
+const provider = new AnthropicProvider({
+  apiKey: process.env.ANTHROPIC_API_KEY!,
+  model: "claude-sonnet-4-6",
+});
+
+// 1. Create runtime instance once
+const assistant = new AgentRuntime({
+  name: "SupportAgent",
+  instructions: "You assist customers with technical billing queries.",
+  model: provider,
+  tools: [/* your tools */],
+});
+
+// 2. Invoke multiple times with different user inputs
+const response1 = await assistant.run("Where is my invoice?", {
+  sessionId: "user_session_1",
+});
+
+const response2 = await assistant.run("Can I pay with PayPal?", {
+  sessionId: "user_session_1",
+});
+```
+
+---
+
+## Passing Pre-existing Message History
+
+Instead of passing a simple string, you can pass an array of `ChatMessage` objects to resume conversations:
+
+```typescript
+const result = await assistant.run([
+  { role: "user", content: "My name is John." },
+  { role: "assistant", content: "Nice to meet you John! How can I help?" },
+  { role: "user", content: "What is my name?" },
+]);
+
+console.log(result.output); // "Your name is John."
+```

@@ -1,0 +1,52 @@
+---
+title: Introduction
+description: The open-source, strongly-typed Agent SDK for TypeScript and Node.js.
+---
+
+# Raseo SDK
+
+`raseo-sdk` provides a unified, production-ready foundation for building AI agents and LLM applications in TypeScript. It eliminates vendor lock-in with a standardized model provider layer, real-time response streaming, type-safe tool definitions using Zod, and an autonomous multi-turn reasoning loop (`runAgent`).
+
+---
+
+## Why Raseo?
+
+Building agentic workflows today usually requires rewriting tool definitions, request payloads, streaming iterators, and error handlers whenever you switch between OpenAI, Anthropic, or Google Gemini. 
+
+`raseo-sdk` solves this by introducing a **vendor-neutral foundation**:
+
+- **Unified Model Providers**: One clean interface across OpenAI (backed by the modern Responses API), Anthropic Claude (`@anthropic-ai/sdk`), and Google Gemini (`@google/genai`).
+- **Type-Safe Tools with Zod**: Define tools using standard Zod schemas with complete TypeScript type inference on execution parameters, and automatic conversion to JSON Schema for model consumption.
+- **Autonomous Reasoning Loop (`runAgent`)**: Multi-turn agent loop that queries the model, detects tool calls, runs validation and guardrails, executes tools via `ToolExecutor`, appends results, and cycles until the task is complete.
+- **Identical Streaming Semantics**: Zero divergence in how you consume tokens: `streamResult.textStream` provides an async iterable of text chunks across all supported providers.
+- **Tool Execution Guardrails**: Attach custom pre-execution validation hooks to individual tools to prevent dangerous calls before execution logic runs.
+- **Session State Management**: Track conversation history across multiple turns using `MemorySessionStorageAdapter` or custom persistent adapters.
+
+---
+
+## Architecture at a Glance
+
+`raseo-sdk` adheres to a strict separation of lifetimes:
+
+| Concept | Lifetime | Description |
+| :--- | :--- | :--- |
+| **`AgentConfig`** | Static & Immutable | The unchanging declaration of an agent (name, instructions, model provider, and tools). |
+| **`AgentRunContext`** | Ephemeral (Per-Invocation) | Runtime state created during `runAgent` (runId, turnCount, maxTurns, AbortSignal, metadata). |
+| **`SessionState`** | Persisted (Cross-Run) | Long-lived conversation history stored in session adapters like `MemorySessionStorageAdapter`. |
+
+---
+
+## Subpath Exports
+
+`raseo-sdk` is published as a single package with clean subpath exports to prevent unnecessary bundle bloat:
+
+```typescript
+import { runAgent, tool } from "raseo-sdk";
+import { OpenAIProvider } from "raseo-sdk/openai";
+import { AnthropicProvider } from "raseo-sdk/anthropic";
+import { GeminiProvider } from "raseo-sdk/gemini";
+import { ToolRegistry, ToolExecutor } from "raseo-sdk/tool";
+import { MemorySessionStorageAdapter } from "raseo-sdk/session";
+```
+
+Ready to dive in? Check out the [Installation Guide](/docs/getting-started/installation) or jump straight to the [Quickstart](/docs/getting-started/quickstart).

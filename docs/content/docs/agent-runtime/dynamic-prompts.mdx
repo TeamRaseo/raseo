@@ -1,0 +1,64 @@
+---
+title: Dynamic Instructions
+description: Resolve dynamic system prompts at runtime using context-aware instruction resolvers.
+---
+
+# Dynamic Instructions
+
+In many real-world applications, an agent's system prompt depends on dynamic parameters: current user ID, active permissions, current timestamp, or session state.
+
+`raseo-sdk` supports **Dynamic Instructions** via `InstructionResolver`.
+
+---
+
+## Static vs Dynamic Instructions
+
+The `instructions` field in `AgentConfig` accepts either:
+1. A static `string`
+2. An async or sync function returning a string: `(context: AgentRunContext) => Promise<string> | string`
+
+```typescript
+export type InstructionResolver =
+  | string
+  | ((context: AgentRunContext) => Promise<string> | string);
+```
+
+---
+
+## Context-Aware Example
+
+```typescript
+import { runAgent } from "raseo-sdk";
+import { GeminiProvider } from "raseo-sdk/gemini";
+
+const provider = new GeminiProvider({
+  apiKey: process.env.GEMINI_API_KEY!,
+  model: "gemini-3.5-flash",
+});
+
+const result = await runAgent(
+  {
+    name: "EnterpriseAgent",
+    // Instructions resolved dynamically per invocation:
+    instructions: async (context) => {
+      const currentTime = new Date().toISOString();
+      const userSession = context.sessionId ?? "guest";
+
+      return `
+You are EnterpriseAgent.
+- Current server time: ${currentTime}
+- Active session ID: ${userSession}
+- Max turns allowed: ${context.maxTurns}
+Always address the user professionally.
+      `.trim();
+    },
+    model: provider,
+  },
+  "What is my current session identifier?",
+  { sessionId: "sess_enterprise_772" }
+);
+
+console.log(result.output);
+```
+
+Because `AgentConfig` remains immutable, this approach allows you to inject runtime state without creating new agent objects or leaking state between concurrent requests.

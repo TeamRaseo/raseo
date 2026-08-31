@@ -1,0 +1,123 @@
+---
+title: Quickstart
+description: Get up and running with model generation, real-time streaming, tools, and agents in 5 minutes.
+---
+
+# Quickstart
+
+This guide walks you through generating your first response, streaming tokens, defining a type-safe tool, and running an autonomous agent loop with `raseo-sdk`.
+
+---
+
+## 1. Generating a Response (`generate`)
+
+Initialize any provider (`OpenAIProvider`, `AnthropicProvider`, or `GeminiProvider`) and call `.generate()`:
+
+```typescript
+import { OpenAIProvider } from "raseo-sdk/openai";
+
+const provider = new OpenAIProvider({
+  apiKey: process.env.OPENAI_API_KEY!,
+  model: "gpt-4o-mini",
+});
+
+const response = await provider.generate({
+  messages: [
+    { role: "system", content: "You are a helpful TypeScript assistant." },
+    { role: "user", content: "What are the benefits of type inference in TypeScript?" },
+  ],
+});
+
+console.log("Response:", response.message.content);
+console.log("Finish Reason:", response.finishReason); // "stop"
+console.log("Token Usage:", response.usage);
+```
+
+---
+
+## 2. Real-Time Streaming (`stream`)
+
+Stream tokens chunk-by-chunk using `streamResult.textStream`:
+
+```typescript
+import { AnthropicProvider } from "raseo-sdk/anthropic";
+
+const provider = new AnthropicProvider({
+  apiKey: process.env.ANTHROPIC_API_KEY!,
+  model: "claude-sonnet-4-6",
+});
+
+const streamResult = await provider.stream({
+  messages: [{ role: "user", content: "Write a haiku about clean code." }],
+});
+
+// Stream text chunks directly to console
+for await (const chunk of streamResult.textStream) {
+  process.stdout.write(chunk);
+}
+
+// Await the final accumulated response and token metrics
+const finalResponse = await streamResult.response;
+console.log("\nTotal Tokens:", finalResponse.usage?.totalTokens);
+```
+
+---
+
+## 3. Defining a Type-Safe Tool (`tool`)
+
+Define tools with the `tool()` helper and Zod schemas. TypeScript automatically infers the input parameter types:
+
+```typescript
+import { tool } from "raseo-sdk/tool";
+import { z } from "zod";
+
+const weatherTool = tool({
+  name: "get_weather",
+  description: "Get the current temperature for a city",
+  input: z.object({
+    city: z.string().describe("City name, e.g. Tokyo, London"),
+    unit: z.enum(["celsius", "fahrenheit"]).optional(),
+  }),
+  async execute({ city, unit }) {
+    // city is typed as string, unit as "celsius" | "fahrenheit" | undefined
+    return {
+      city,
+      temperature: 21,
+      unit: unit ?? "celsius",
+      condition: "Partly Cloudy",
+    };
+  },
+});
+```
+
+---
+
+## 4. Running an Agent (`runAgent`)
+
+Use `runAgent` to execute a multi-turn agent loop. The runtime calls the LLM, detects tool calls, executes them, feeds back the results, and returns the final answer:
+
+```typescript
+import { runAgent } from "raseo-sdk";
+import { GeminiProvider } from "raseo-sdk/gemini";
+
+const provider = new GeminiProvider({
+  apiKey: process.env.GEMINI_API_KEY!,
+  model: "gemini-3.5-flash",
+});
+
+const result = await runAgent(
+  {
+    name: "WeatherAgent",
+    instructions: "You are a concise weather assistant. Always use tools to fetch weather.",
+    model: provider,
+    tools: [weatherTool],
+  },
+  "What is the weather in Tokyo?"
+);
+
+console.log("Final Answer:", result.output);
+console.log("Turn Count:", result.turnCount);
+console.log("Executed by:", result.finalAgentName);
+```
+
+Next, learn how `raseo-sdk` separates [Lifetimes & Architecture](/docs/getting-started/architecture).

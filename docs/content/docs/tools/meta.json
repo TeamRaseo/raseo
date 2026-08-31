@@ -1,0 +1,8 @@
+{
+  "title": "Tools & Validation",
+  "pages": [
+    "defining-tools",
+    "registry-executor",
+    "guardrails"
+  ]
+}

@@ -1,0 +1,69 @@
+---
+title: Error Hierarchy
+description: Standardized, typed runtime errors in raseo-sdk.
+---
+
+# Error Hierarchy
+
+`raseo-sdk` features a clean, typed error class hierarchy for reliable error handling in production.
+
+All SDK errors inherit from `RaseoError`:
+
+```
+RaseoError (native Error)
+├── TurnLimitExceededError
+├── ToolExecutionError
+├── InvalidStructuredOutputError
+├── HandoffLoopError
+├── ModelProviderError
+└── GuardrailViolationError
+```
+
+---
+
+## Import
+
+```typescript
+import {
+  RaseoError,
+  TurnLimitExceededError,
+  ToolExecutionError,
+  InvalidStructuredOutputError,
+  HandoffLoopError,
+  ModelProviderError,
+  GuardrailViolationError,
+} from "raseo-sdk";
+```
+
+---
+
+## Error Classes
+
+| Error Class | Trigger Scenario | Key Properties |
+| :--- | :--- | :--- |
+| **`TurnLimitExceededError`** | Agent loop exceeded the configured `maxTurns` limit without terminating. | `maxTurns`, `turnCount` |
+| **`ToolExecutionError`** | An unhandled exception was thrown inside a tool's `execute()` function. | `toolName`, `cause` |
+| **`GuardrailViolationError`** | A tool-level or agent-level guardrail failed validation. | `reason` |
+| **`ModelProviderError`** | The upstream provider (OpenAI, Claude, Gemini) returned an API error. | `provider`, `status` |
+| **`InvalidStructuredOutputError`**| The model output failed to parse against the requested JSON schema. | `schema`, `rawOutput` |
+| **`HandoffLoopError`** | Agent handoff exceeded recursive loop limits. | `agentChain` |
+
+---
+
+## Example Error Handling
+
+```typescript
+import { runAgent, TurnLimitExceededError, GuardrailViolationError } from "raseo-sdk";
+
+try {
+  const result = await runAgent(config, "Process request", { maxTurns: 3 });
+} catch (error) {
+  if (error instanceof TurnLimitExceededError) {
+    console.error(`Agent ran out of turns (${error.maxTurns})!`);
+  } else if (error instanceof GuardrailViolationError) {
+    console.error(`Operation blocked by guardrail: ${error.message}`);
+  } else {
+    console.error("Unexpected error:", error);
+  }
+}
+```

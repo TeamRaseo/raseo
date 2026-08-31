@@ -1,0 +1,69 @@
+---
+title: Installation
+description: Install raseo-sdk and configure your environment for TypeScript and Node.js.
+---
+
+# Installation
+
+Install `raseo-sdk` alongside `zod` using your package manager of choice:
+
+## Package Manager
+
+```bash
+# Using pnpm
+pnpm add raseo-sdk zod
+
+# Using npm
+npm install raseo-sdk zod
+
+# Using yarn
+yarn add raseo-sdk zod
+
+# Using bun
+bun add raseo-sdk zod
+```
+
+---
+
+## Environment Requirements
+
+- **Node.js**: `>= 18.0.0`
+- **TypeScript**: `>= 5.0` (Recommended)
+- **Module System**: Full support for both **ESM** (`"type": "module"`) and **CommonJS** (`require`).
+
+---
+
+## Environment Variables
+
+Depending on which model providers you plan to use, configure your API keys in your `.env` file or runtime environment:
+
+```bash
+# OpenAI (Responses API)
+OPENAI_API_KEY="sk-..."
+
+# Anthropic Claude
+ANTHROPIC_API_KEY="sk-ant-..."
+
+# Google Gemini
+GEMINI_API_KEY="AIza..."
+```
+
+---
+
+## TypeScript Setup
+
+Ensure your `tsconfig.json` enables modern module resolution and strict type checking:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true
+  }
+}
+```
+
+Now you're ready to proceed to the [Quickstart Guide](/docs/getting-started/quickstart)!

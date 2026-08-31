@@ -1,0 +1,94 @@
+---
+title: Architecture & Lifetimes
+description: Understand the strict three-lifetime separation that powers raseo-sdk.
+---
+
+# Architecture & Lifetimes
+
+Many agent frameworks mix agent definitions, ephemeral run state, and long-term memory into single monolithic objects. This leads to subtle state leaks, memory leaks in long-running services, and difficult debugging.
+
+`raseo-sdk` enforces an explicit **Three-Lifetime Separation**:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Lifetime 1: AgentConfig                                  │
+│ (Static, Declarative, Immutable Definition)             │
+└──────────────────────────┬──────────────────────────────┘
+                           │ Passed into runAgent()
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│ Lifetime 2: AgentRunContext                             │
+│ (Ephemeral, Per-Invocation State: runId, signal, turns)  │
+└──────────────────────────┬──────────────────────────────┘
+                           │ Optional reference
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│ Lifetime 3: SessionState                                │
+│ (Persisted, Cross-Run History & Multi-turn Memory)      │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Lifetime 1: `AgentConfig` (Static & Declarative)
+
+`AgentConfig` defines what an agent **is**, not how it runs. It is completely immutable and safe to share across multiple concurrent requests:
+
+```typescript
+import type { AgentConfig } from "raseo-sdk";
+
+export const supportAgentConfig: AgentConfig = {
+  name: "SupportAgent",
+  instructions: "Help customers troubleshoot technical issues politely.",
+  model: provider,
+  tools: [ticketTool, lookupTool],
+};
+```
+
+---
+
+## Lifetime 2: `AgentRunContext` (Ephemeral Execution)
+
+When `runAgent()` is invoked, a fresh `AgentRunContext` is instantiated for that specific execution run:
+
+```typescript
+export interface AgentRunContext {
+  runId: string;              // Unique run identifier: "run_17199..."
+  turnCount: number;          // Current loop turn index
+  maxTurns: number;           // Configured turn ceiling (default: 10)
+  currentAgentName: string;   // Active agent name
+  metadata: Record<string, unknown>;
+  sessionId?: string;         // Attached session ID (if provided)
+  signal?: AbortSignal;       // Cancellation signal
+}
+```
+
+Dynamic instructions can access this context to customize system prompts on the fly:
+
+```typescript
+const dynamicAgent: AgentConfig = {
+  name: "ContextAwareAgent",
+  instructions: async (context) => {
+    return `You are running in session ${context.sessionId ?? "anonymous"}. Current turn: ${context.turnCount}.`;
+  },
+  model: provider,
+};
+```
+
+---
+
+## Lifetime 3: `SessionState` (Persisted Cross-Run)
+
+`SessionState` represents historical state stored across turns and executions:
+
+```typescript
+export interface SessionState {
+  sessionId: string;
+  messages: ChatMessage[];
+  metadata: Record<string, unknown>;
+  createdAt: number;
+  updatedAt: number;
+}
+```
+
+Managed via `SessionStorageAdapter` implementations (such as `MemorySessionStorageAdapter` or custom database storage).

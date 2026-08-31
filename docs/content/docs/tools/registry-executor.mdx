@@ -1,0 +1,102 @@
+---
+title: Tool Registry & Executor
+description: Standalone tool execution engine with Zod schema validation and error isolation.
+---
+
+# Tool Registry & Executor
+
+For applications that need custom execution loops, background queues, or RPC architectures, `raseo-sdk/tool` exposes `ToolRegistry` and `ToolExecutor` as standalone primitives.
+
+---
+
+## Tool Registry (`ToolRegistry`)
+
+`ToolRegistry` manages the lifecycle and lookup of registered tools:
+
+```typescript
+import { tool, ToolRegistry, createToolRegistry } from "raseo-sdk/tool";
+import { z } from "zod";
+
+const addTool = tool({
+  name: "add",
+  description: "Add two numbers",
+  input: z.object({ a: z.number(), b: z.number() }),
+  execute: ({ a, b }) => ({ result: a + b }),
+});
+
+// Initialize with a collection of tools
+const registry = new ToolRegistry([addTool]);
+
+// Dynamic registration
+registry.register(someOtherTool);
+
+// Lookup
+const hasAdd = registry.has("add"); // true
+const toolDef = registry.get("add");
+```
+
+---
+
+## Tool Executor (`ToolExecutor`)
+
+`ToolExecutor` orchestrates tool execution with:
+1. **Schema Validation**: Parses inputs using Zod `input.safeParse()`.
+2. **Guardrail Enforcement**: Checks tool-level guardrail hooks.
+3. **Execution Safety**: Catches exceptions and returns standardized `ToolResult` objects.
+
+```typescript
+import { ToolExecutor } from "raseo-sdk/tool";
+
+const executor = new ToolExecutor(registry);
+
+// 1. Direct execution by tool name
+const result = await executor.execute("add", { a: 10, b: 20 });
+
+if (result.success) {
+  console.log("Calculation Output:", result.data); // { result: 30 }
+} else {
+  console.error("Execution Error:", result.error);
+}
+```
+
+---
+
+## Executing LLM Tool Calls (`executeCall`)
+
+When handling raw tool calls from model providers (`ToolCall` objects):
+
+```typescript
+const toolCall = {
+  id: "call_abc123",
+  name: "add",
+  arguments: { a: 15, b: 5 },
+};
+
+const result = await executor.executeCall(toolCall, {
+  context: { runId: "run_999" },
+});
+
+console.log(result);
+/*
+{
+  success: true,
+  toolName: "add",
+  toolCallId: "call_abc123",
+  data: { result: 20 }
+}
+*/
+```
+
+If the arguments do not match the Zod schema, `ToolExecutor` returns a structured failure without throwing uncaught exceptions:
+
+```typescript
+const invalidCall = {
+  id: "call_fail",
+  name: "add",
+  arguments: { a: "not-a-number", b: 5 },
+};
+
+const result = await executor.executeCall(invalidCall);
+console.log(result.success); // false
+console.log(result.error);   // "Validation failed: Expected number, received string at 'a'"
+```

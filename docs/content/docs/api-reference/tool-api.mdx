@@ -1,0 +1,66 @@
+---
+title: Tool Package (raseo-sdk/tool)
+description: Complete API reference for tool creation, registry, execution, and schema conversion.
+---
+
+# Tool Package Reference (`raseo-sdk/tool`)
+
+The `raseo-sdk/tool` subpath provides tools, registry management, execution engines, and JSON schema conversion.
+
+```typescript
+import {
+  tool,
+  createTool,
+  ToolRegistry,
+  createToolRegistry,
+  ToolExecutor,
+  createToolExecutor,
+  zodToJsonSchema,
+  toToolSpec,
+  type ToolConfig,
+  type ToolDefinition,
+  type ToolContext,
+} from "raseo-sdk/tool";
+```
+
+---
+
+## Functions
+
+### `tool(config)` / `createTool(config)`
+Constructs a strongly typed `ToolDefinition`.
+```typescript
+const myTool = tool({
+  name: "lookup",
+  description: "Lookup data",
+  input: z.object({ id: z.string() }),
+  async execute({ id }, context) {
+    return { id, found: true };
+  },
+});
+```
+
+### `zodToJsonSchema(schema)`
+Transforms a Zod schema into a standard JSON Schema object for LLM function parameters.
+
+### `toToolSpec(tool)`
+Normalizes either a `ToolDefinition` or a pre-existing `ToolSpec` into a standard `ToolSpec` accepted by model providers.
+
+---
+
+## Classes
+
+### `ToolRegistry`
+In-memory container for registered tools.
+- `new ToolRegistry(tools?: ToolDefinition[])`
+- `.register(tool: ToolDefinition): void`
+- `.unregister(name: string): boolean`
+- `.get(name: string): ToolDefinition | undefined`
+- `.has(name: string): boolean`
+- `.getAll(): ToolDefinition[]`
+
+### `ToolExecutor`
+Safe execution pipeline for tools.
+- `new ToolExecutor(registry: ToolRegistry)`
+- `.execute(name: string, input: unknown, options?: ToolExecutionOptions): Promise<ToolResult>`
+- `.executeCall(toolCall: ToolCall, options?: ToolExecutionOptions): Promise<ToolResult>`

@@ -49,7 +49,9 @@
     "build": "tsup",
     "dev": "tsup src/index.ts --watch",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/test.js"
+    "test": "node scripts/test.js",
+    "docs:dev": "pnpm --dir docs dev",
+    "docs:build": "pnpm --dir docs build"
   },
   "repository": {
     "type": "git",

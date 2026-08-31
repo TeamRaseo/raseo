@@ -1,0 +1,110 @@
+---
+title: Defining Type-Safe Tools
+description: Create strongly typed tools with automatic Zod JSON Schema conversion and TypeScript inference.
+---
+
+# Defining Type-Safe Tools
+
+Tools allow LLMs and Agents to interact with external APIs, databases, calculation engines, and file systems.
+
+`raseo-sdk` provides the `tool()` helper (`raseo-sdk/tool`) to define tools with full TypeScript type inference and automatic conversion of Zod schemas to JSON Schema for model consumption.
+
+---
+
+## Defining a Tool with `tool()`
+
+```typescript
+import { tool } from "raseo-sdk/tool";
+import { z } from "zod";
+
+export const searchDatabaseTool = tool({
+  name: "search_database",
+  description: "Search customer records by name or email query",
+  input: z.object({
+    query: z.string().describe("Search term"),
+    limit: z.number().optional().default(5).describe("Max results to return"),
+  }),
+  async execute({ query, limit }, context) {
+    // TypeScript automatically infers:
+    // query: string
+    // limit: number | undefined
+    return {
+      results: [
+        { id: "cust_1", name: "Alice", match: query },
+      ],
+      count: 1,
+    };
+  },
+});
+```
+
+---
+
+## Tool Context (`ToolContext`)
+
+The optional second argument to `execute` is `ToolContext`, which provides runtime metadata:
+
+```typescript
+export interface ToolContext {
+  runId?: string;
+  currentAgentName?: string;
+  sessionId?: string;
+  signal?: AbortSignal;
+}
+```
+
+This is especially helpful for respecting cancellation (`context.signal?.aborted`) or attributing database writes to `context.sessionId`.
+
+---
+
+## Automatic JSON Schema Conversion
+
+Under the hood, `raseo-sdk` uses `zodToJsonSchema()` to translate your Zod schemas into JSON Schema specifications compliant with OpenAI, Anthropic, and Gemini:
+
+```typescript
+import { zodToJsonSchema } from "raseo-sdk/tool";
+import { z } from "zod";
+
+const schema = z.object({
+  city: z.string().describe("City name"),
+  units: z.enum(["celsius", "fahrenheit"]).optional(),
+});
+
+const jsonSchema = zodToJsonSchema(schema);
+/*
+Output:
+{
+  type: "object",
+  properties: {
+    city: { type: "string", description: "City name" },
+    units: { type: "string", enum: ["celsius", "fahrenheit"] }
+  },
+  required: ["city"]
+}
+*/
+```
+
+---
+
+## Direct Provider Tool Calling
+
+You can pass tool definitions directly to any provider's `.generate()` method without running an agent:
+
+```typescript
+import { OpenAIProvider } from "raseo-sdk/openai";
+
+const provider = new OpenAIProvider({
+  apiKey: process.env.OPENAI_API_KEY!,
+  model: "gpt-4o-mini",
+});
+
+const response = await provider.generate({
+  messages: [{ role: "user", content: "Find customers named Alice" }],
+  tools: [searchDatabaseTool], // Automatically converted to ToolSpec!
+});
+
+// Check if the model called a tool
+if (response.toolCalls && response.toolCalls.length > 0) {
+  console.log("Model requested tool call:", response.toolCalls[0]);
+}
+```

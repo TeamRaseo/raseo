@@ -1,0 +1,66 @@
+---
+title: Anthropic Provider
+description: First-class integration with Claude models using @anthropic-ai/sdk.
+---
+
+# Anthropic Provider
+
+The `AnthropicProvider` integrates Claude models (e.g. `claude-sonnet-4-6`, `claude-3-5-sonnet-20241022`) via Anthropic's official `@anthropic-ai/sdk`.
+
+---
+
+## Import
+
+```typescript
+import { AnthropicProvider, createAnthropicProvider } from "raseo-sdk/anthropic";
+```
+
+---
+
+## Automatic System Message Handling
+
+Anthropic's Messages API requires system instructions to be passed in a dedicated top-level `system` field rather than inside the `messages` array.
+
+`raseo-sdk` handles this automatically through `AnthropicMapper`: you pass standard `{ role: "system", content: "..." }` messages in your `messages` array, and the mapper extracts and normalizes them into Anthropic's required format.
+
+---
+
+## Non-Streaming Generation (`generate`)
+
+```typescript
+import { AnthropicProvider } from "raseo-sdk/anthropic";
+
+const provider = new AnthropicProvider({
+  apiKey: process.env.ANTHROPIC_API_KEY!,
+  model: "claude-sonnet-4-6",
+});
+
+const response = await provider.generate({
+  messages: [
+    { role: "system", content: "You are a concise engineering assistant." },
+    { role: "user", content: "What is the difference between concurrency and parallelism?" },
+  ],
+  temperature: 0.5,
+  maxTokens: 500,
+});
+
+console.log(response.message.content);
+console.log("Usage:", response.usage);
+```
+
+---
+
+## Real-Time Streaming (`stream`)
+
+```typescript
+const streamResult = await provider.stream({
+  messages: [{ role: "user", content: "Write a short story about an AI discovering music." }],
+});
+
+for await (const chunk of streamResult.textStream) {
+  process.stdout.write(chunk);
+}
+
+const response = await streamResult.response;
+console.log("\nFinished reason:", response.finishReason);
+```

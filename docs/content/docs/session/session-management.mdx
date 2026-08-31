@@ -1,0 +1,101 @@
+---
+title: Session Management
+description: Persist conversation history and metadata across turns with storage adapters.
+---
+
+# Session Management
+
+`raseo-sdk/session` provides a modular session state system to store and resume multi-turn conversations across HTTP requests or process restarts.
+
+---
+
+## Import
+
+```typescript
+import {
+  MemorySessionStorageAdapter,
+  createSession,
+  type SessionState,
+  type SessionStorageAdapter,
+} from "raseo-sdk/session";
+```
+
+---
+
+## `SessionState` Structure
+
+A session captures conversation messages and metadata:
+
+```typescript
+export interface SessionState {
+  sessionId: string;
+  messages: ChatMessage[];
+  metadata: Record<string, unknown>;
+  createdAt: number;
+  updatedAt: number;
+}
+```
+
+---
+
+## In-Memory Session Storage (`MemorySessionStorageAdapter`)
+
+Ideal for local development, testing, and single-instance deployments:
+
+```typescript
+import { MemorySessionStorageAdapter, type SessionState } from "raseo-sdk/session";
+
+const storage = new MemorySessionStorageAdapter();
+
+// Save conversation
+const state: SessionState = {
+  sessionId: "user_7482_chat",
+  messages: [
+    { role: "user", content: "Can you summarize my recent invoices?" },
+    { role: "assistant", content: "Sure! Here is a summary of your recent invoices..." },
+  ],
+  metadata: { userId: "user_7482", tier: "pro" },
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+};
+
+await storage.saveSession(state);
+
+// Retrieve conversation
+const retrieved = await storage.getSession("user_7482_chat");
+console.log("Found messages:", retrieved?.messages.length);
+
+// Delete session
+await storage.deleteSession("user_7482_chat");
+```
+
+---
+
+## Creating Custom Storage Adapters
+
+Implement the `SessionStorageAdapter` interface to persist sessions to Redis, PostgreSQL, DynamoDB, or MongoDB:
+
+```typescript
+import type { SessionStorageAdapter, SessionState } from "raseo-sdk/session";
+
+export class RedisSessionStorageAdapter implements SessionStorageAdapter {
+  constructor(private redisClient: any) {}
+
+  async getSession(sessionId: string): Promise<SessionState | null> {
+    const raw = await this.redisClient.get(`session:${sessionId}`);
+    return raw ? JSON.parse(raw) : null;
+  }
+
+  async saveSession(session: SessionState): Promise<void> {
+    await this.redisClient.set(
+      `session:${session.sessionId}`,
+      JSON.stringify(session),
+      { EX: 86400 } // 24h TTL
+    );
+  }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    await this.redisClient.del(`session:${sessionId}`);
+  }
+}
+```

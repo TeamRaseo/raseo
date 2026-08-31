@@ -1,0 +1,13 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "getting-started",
+    "providers",
+    "tools",
+    "agent-runtime",
+    "streaming",
+    "session",
+    "api-reference"
+  ]
+}

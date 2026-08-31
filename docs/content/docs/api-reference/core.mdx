@@ -1,0 +1,81 @@
+---
+title: Core Package (raseo-sdk)
+description: Complete API reference for primary exports from the root raseo-sdk package.
+---
+
+# Core Package Reference (`raseo-sdk`)
+
+The root import path `raseo-sdk` exports the agent execution loop, runtime classes, tool builder, and core TypeScript types.
+
+```typescript
+import {
+  runAgent,
+  AgentRuntime,
+  tool,
+  createTool,
+  toToolSpec,
+  type AgentConfig,
+  type AgentRunContext,
+  type AgentRunResult,
+  type ChatMessage,
+  type SystemMessage,
+  type UserMessage,
+  type AssistantMessage,
+  type ToolResponseMessage,
+  type ModelRequest,
+  type ModelResponse,
+  type ModelStreamResponse,
+  type ToolDefinition,
+  type ToolResult,
+  type ToolCall,
+} from "raseo-sdk";
+```
+
+---
+
+## Methods & Classes
+
+### `runAgent(config, input, options)`
+Executes an automated multi-turn reasoning loop.
+- **`config`** (`AgentConfig`): Static agent configuration.
+- **`input`** (`string | readonly ChatMessage[]`): Initial prompt or conversation history.
+- **`options`** (`{ maxTurns?: number; signal?: AbortSignal; sessionId?: string }`): Optional execution options.
+- **Returns**: `Promise<AgentRunResult>`.
+
+### `new AgentRuntime(config)`
+Instantiates a long-lived agent runtime.
+- **`.run(input, options)`**: Executes the agent loop for given input.
+
+### `tool(config)`
+Defines a type-safe tool definition with automatic Zod generic inference.
+
+---
+
+## Interfaces & Types
+
+### `AgentConfig`
+```typescript
+export interface AgentConfig {
+  name: string;
+  instructions?: InstructionResolver;
+  model: ModelProvider;
+  tools?: (ToolSpec | ToolDefinition)[];
+}
+```
+
+### `AgentRunResult`
+```typescript
+export interface AgentRunResult {
+  output: string;
+  messages: ChatMessage[];
+  turnCount: number;
+  finalAgentName: string;
+}
+```
+
+### `ChatMessage`
+Discriminated union of:
+- `SystemMessage`: `{ role: "system", content: string }`
+- `UserMessage`: `{ role: "user", content: string }`
+- `AssistantMessage`: `{ role: "assistant", content: string }`
+- `ToolResponseMessage`: `{ role: "tool", toolCallId: string, toolName: string, content: string }`

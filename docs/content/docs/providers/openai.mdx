@@ -1,0 +1,76 @@
+---
+title: OpenAI Provider
+description: Production-ready integration with OpenAI models powered by the Responses API.
+---
+
+# OpenAI Provider
+
+The `OpenAIProvider` leverages OpenAI's modern **Responses API** (`openai.responses.create` and `openai.responses.stream`) to deliver high-performance generation, tool invocation, and streaming.
+
+---
+
+## Import
+
+```typescript
+import { OpenAIProvider } from "raseo-sdk/openai";
+```
+
+---
+
+## Configuration Options
+
+```typescript
+export interface ProviderConfig {
+  apiKey?: string;              // OpenAI API key (defaults to process.env.OPENAI_API_KEY)
+  model: string;                // Model name, e.g. "gpt-4o", "gpt-4o-mini"
+  baseURL?: string;             // Custom endpoint or proxy URL
+  organization?: string;        // OpenAI organization ID
+  timeout?: number;             // Request timeout in milliseconds
+  maxRetries?: number;          // Automatic retry count
+  headers?: Record<string, string>; // Custom request headers
+}
+```
+
+---
+
+## Non-Streaming Generation (`generate`)
+
+```typescript
+import { OpenAIProvider } from "raseo-sdk/openai";
+
+const provider = new OpenAIProvider({
+  apiKey: process.env.OPENAI_API_KEY!,
+  model: "gpt-4o-mini",
+});
+
+const response = await provider.generate({
+  messages: [
+    { role: "system", content: "You are an expert software architect." },
+    { role: "user", content: "Summarize the benefits of microfrontends in 3 bullets." },
+  ],
+  temperature: 0.7,
+  maxTokens: 300,
+});
+
+console.log(response.message.content);
+console.log("Usage:", response.usage);
+```
+
+---
+
+## Real-Time Streaming (`stream`)
+
+Consume tokens progressively using `streamResult.textStream`:
+
+```typescript
+const streamResult = await provider.stream({
+  messages: [{ role: "user", content: "Explain quantum computing simply." }],
+});
+
+for await (const text of streamResult.textStream) {
+  process.stdout.write(text);
+}
+
+const finalResponse = await streamResult.response;
+console.log("\nTokens Used:", finalResponse.usage?.totalTokens);
+```

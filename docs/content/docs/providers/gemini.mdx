@@ -1,0 +1,66 @@
+---
+title: Google Gemini Provider
+description: Integration with Google Gemini models powered by @google/genai.
+---
+
+# Google Gemini Provider
+
+The `GeminiProvider` provides native support for Google Gemini models (e.g. `gemini-3.5-flash`, `gemini-2.5-flash`) powered by Google's official `@google/genai` SDK.
+
+---
+
+## Import
+
+```typescript
+import { GeminiProvider, createGeminiProvider } from "raseo-sdk/gemini";
+```
+
+---
+
+## Automatic Content Normalization
+
+Gemini uses a unique `contents` schema with `parts` arrays and `systemInstruction` configurations.
+
+`raseo-sdk`'s `GeminiMapper` converts standard `ChatMessage` items into Gemini-compatible `Content` structures seamlessly, so your application code never needs vendor-specific formatting logic.
+
+---
+
+## Non-Streaming Generation (`generate`)
+
+```typescript
+import { GeminiProvider } from "raseo-sdk/gemini";
+
+const provider = new GeminiProvider({
+  apiKey: process.env.GEMINI_API_KEY!,
+  model: "gemini-3.5-flash",
+});
+
+const response = await provider.generate({
+  messages: [
+    { role: "system", content: "You are an AI research assistant." },
+    { role: "user", content: "Explain how attention mechanisms function in transformers." },
+  ],
+  temperature: 0.7,
+  maxTokens: 400,
+});
+
+console.log(response.message.content);
+console.log("Finish Reason:", response.finishReason);
+```
+
+---
+
+## Real-Time Streaming (`stream`)
+
+```typescript
+const streamResult = await provider.stream({
+  messages: [{ role: "user", content: "Write a poem about space exploration." }],
+});
+
+for await (const chunk of streamResult.textStream) {
+  process.stdout.write(chunk);
+}
+
+const finalResponse = await streamResult.response;
+console.log("\nToken Usage:", finalResponse.usage);
+```

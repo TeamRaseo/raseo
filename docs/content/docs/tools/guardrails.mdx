@@ -1,0 +1,71 @@
+---
+title: Tool Guardrails
+description: Validate arguments, enforce authorization, and block forbidden operations with tool-level guardrails.
+---
+
+# Tool Guardrails
+
+Guardrails allow you to inspect tool arguments **before** the tool's execution logic runs. This is critical for preventing unauthorized database mutations, protecting system files, and enforcing security policies.
+
+---
+
+## Defining a Tool with Guardrails
+
+Pass a `guardrail` function inside `tool()`:
+
+```typescript
+import { tool } from "raseo-sdk/tool";
+import { z } from "zod";
+
+export const deleteUserAccount = tool({
+  name: "delete_user",
+  description: "Permanently delete a user account by ID",
+  input: z.object({
+    userId: z.string().describe("The user ID to remove"),
+  }),
+  guardrail: (input, context) => {
+    const { userId } = input as { userId: string };
+
+    // Prevent deletion of protected admin or system users
+    if (userId === "admin" || userId === "root" || userId.startsWith("sys_")) {
+      return {
+        passed: false,
+        reason: `Cannot delete protected account: ${userId}`,
+      };
+    }
+
+    return { passed: true };
+  },
+  async execute({ userId }) {
+    // Only executes if guardrail passes!
+    return { success: true, message: `Account ${userId} removed.` };
+  },
+});
+```
+
+---
+
+## Guardrail Contract
+
+The guardrail hook receives the validated input and optional `ToolContext`:
+
+```typescript
+export type ToolGuardrailHook = (
+  input: unknown,
+  context?: ToolContext
+) => GuardrailResult | Promise<GuardrailResult>;
+
+export interface GuardrailResult {
+  passed: boolean;
+  reason?: string;
+}
+```
+
+---
+
+## How the Agent Runtime Handles Violations
+
+When a guardrail fails:
+1. `ToolExecutor` catches the failed check.
+2. The error message (`Guardrail violation: <reason>`) is formatted into a standard tool response message.
+3. The LLM receives this error in its context on the next turn, allowing it to explain the constraint to the user or attempt an alternate action.
