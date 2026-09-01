@@ -2,61 +2,124 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
 
-:root {
-  --color-brand: #00f2fe;
-  --color-brand-secondary: #4facfe;
-  --color-brand-glow: rgba(0, 242, 254, 0.25);
-  --color-bg-subtle: #0d1322;
-  --color-border-subtle: rgba(255, 255, 255, 0.08);
+@theme {
+  --color-docs: #F5F6EE;
+  --color-surface: #EAECE0;
+  --color-code: #1E293C;
+  --color-black: #000000;
+  --color-accent: #889A56;
+  --color-accent-dark: #374025;
+  --color-border-surface: #EAECE0;
+  --color-code-text: #F3F5EB;
+
+  --font-sans: var(--font-readex-pro), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
+/* Light Theme Variables (Exact User Specifications) */
+:root {
+  --background: #F5F6EE;
+  --foreground: #000000;
+
+  --color-fd-background: #F5F6EE;
+  --color-fd-foreground: #000000;
+  --color-fd-muted: #EAECE0;
+  --color-fd-muted-foreground: #4e583d;
+  --color-fd-popover: #FFFFFF;
+  --color-fd-popover-foreground: #000000;
+  --color-fd-card: #FFFFFF;
+  --color-fd-card-foreground: #000000;
+  --color-fd-border: #EAECE0;
+  --color-fd-primary: #889A56;
+  --color-fd-primary-foreground: #FFFFFF;
+  --color-fd-secondary: #EAECE0;
+  --color-fd-secondary-foreground: #374025;
+  --color-fd-accent: #EAECE0;
+  --color-fd-accent-foreground: #374025;
+  --color-fd-ring: #889A56;
+  --color-fd-overlay: rgba(55, 64, 37, 0.2);
+
+  --accent-color: #889A56;
+  --accent-dark: #374025;
+}
+
+/* Dark Theme Variables (Harmonic Botanical Slate/Olive Counterpart) */
 .dark {
-  --background: #070a11;
-  --foreground: #f1f5f9;
+  --background: #131610;
+  --foreground: #F3F5EB;
+
+  --color-fd-background: #131610;
+  --color-fd-foreground: #F3F5EB;
+  --color-fd-muted: #1c2217;
+  --color-fd-muted-foreground: #9ca890;
+  --color-fd-popover: #181e14;
+  --color-fd-popover-foreground: #F3F5EB;
+  --color-fd-card: #181e14;
+  --color-fd-card-foreground: #F3F5EB;
+  --color-fd-border: #262e1f;
+  --color-fd-primary: #a2b86c;
+  --color-fd-primary-foreground: #131610;
+  --color-fd-secondary: #1c2217;
+  --color-fd-secondary-foreground: #F3F5EB;
+  --color-fd-accent: #222a1b;
+  --color-fd-accent-foreground: #a2b86c;
+  --color-fd-ring: #a2b86c;
+  --color-fd-overlay: rgba(0, 0, 0, 0.65);
+
+  --accent-color: #a2b86c;
+  --accent-dark: #374025;
 }
 
 body {
-  background-color: #070a11;
-  color: #f1f5f9;
+  background-color: var(--color-fd-background);
+  color: var(--color-fd-foreground);
+  font-family: var(--font-readex-pro), sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Aurora Glow Utilities */
-.aurora-gradient-text {
-  background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #00c6ff 100%);
+/* Olive Hero Gradient */
+.olive-gradient-text {
+  background: linear-gradient(135deg, #889A56 0%, #374025 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.aurora-gradient-border {
-  border: 1px solid rgba(0, 242, 254, 0.25);
-  box-shadow: 0 0 25px rgba(0, 242, 254, 0.08);
+.dark .olive-gradient-text {
+  background: linear-gradient(135deg, #b8ce7e 0%, #889A56 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.glass-card {
-  background: rgba(13, 19, 34, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Code block exact styling */
+pre, .nd-codeblock {
+  background-color: #1E293C !important;
+  color: #F3F5EB !important;
+  border: 1px solid rgba(234, 236, 224, 0.12) !important;
 }
 
-.glass-card:hover {
-  border-color: rgba(0, 242, 254, 0.35);
-  box-shadow: 0 10px 30px -10px rgba(0, 242, 254, 0.15);
+.dark pre, .dark .nd-codeblock {
+  background-color: #141c29 !important;
+  color: #F3F5EB !important;
+  border: 1px solid rgba(162, 184, 108, 0.15) !important;
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #070a11;
+  background: var(--color-fd-background);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd0be;
   border-radius: 4px;
 }
+.dark ::-webkit-scrollbar-thumb {
+  background: #2a3422;
+}
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #889A56;
 }

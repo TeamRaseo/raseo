@@ -1,16 +1,18 @@
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import type { ReactNode } from 'react';
 import './globals.css';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Readex_Pro, JetBrains_Mono } from 'next/font/google';
 
-const inter = Inter({
+const readexPro = Readex_Pro({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-readex-pro',
+  display: 'swap',
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-mono',
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
 });
 
 export const metadata = {
@@ -24,8 +26,12 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} dark`} suppressHydrationWarning>
-      <body className="flex flex-col min-h-screen bg-[#070a11] text-slate-100 antialiased font-sans">
+    <html
+      lang="en"
+      className={`${readexPro.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="flex flex-col min-h-screen bg-[var(--color-fd-background)] text-[var(--color-fd-foreground)] antialiased font-sans">
         <RootProvider>{children}</RootProvider>
       </body>
     </html>

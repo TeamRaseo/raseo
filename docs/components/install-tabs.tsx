@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Check, Copy, Terminal } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 
 type PackageManager = 'pnpm' | 'npm' | 'yarn' | 'bun';
 
@@ -25,17 +25,17 @@ export function InstallTabs() {
   };
 
   return (
-    <div className="inline-flex flex-col sm:flex-row items-center gap-2 rounded-xl border border-white/10 bg-[#0d1424]/90 p-1.5 backdrop-blur-md">
+    <div className="inline-flex flex-col sm:flex-row items-center gap-2 rounded-xl border border-[#EAECE0] dark:border-[#262e1f] bg-[#EAECE0]/90 dark:bg-[#1c2217]/90 p-1.5 shadow-sm backdrop-blur-md">
       {/* Tabs */}
-      <div className="flex items-center gap-1 bg-[#070b14] rounded-lg p-1">
+      <div className="flex items-center gap-1 bg-[#F5F6EE] dark:bg-[#131610] rounded-lg p-1 border border-[#EAECE0] dark:border-[#262e1f]">
         {(['pnpm', 'npm', 'yarn', 'bun'] as PackageManager[]).map((pkg) => (
           <button
             key={pkg}
             onClick={() => setPm(pkg)}
             className={`px-2.5 py-1 text-xs font-mono rounded-md transition-all ${
               pm === pkg
-                ? 'bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#889A56] text-white dark:bg-[#a2b86c] dark:text-[#131610] font-semibold shadow-sm'
+                : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
             {pkg}
@@ -44,15 +44,15 @@ export function InstallTabs() {
       </div>
 
       {/* Command & Copy */}
-      <div className="flex items-center gap-3 px-3 py-1 font-mono text-xs sm:text-sm text-slate-200">
-        <span className="text-cyan-400 select-none">$</span>
+      <div className="flex items-center gap-3 px-3 py-1 font-mono text-xs sm:text-sm text-black dark:text-[#F3F5EB]">
+        <span className="text-[#889A56] dark:text-[#a2b86c] select-none font-bold">$</span>
         <span>{cmd}</span>
         <button
           onClick={copy}
-          className="ml-2 text-slate-400 hover:text-white transition-colors p-1 rounded hover:bg-white/5"
+          className="ml-2 text-neutral-500 hover:text-black dark:hover:text-white transition-colors p-1 rounded hover:bg-black/5 dark:hover:bg-white/5"
           title="Copy command"
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? <Check className="h-3.5 w-3.5 text-[#889A56] dark:text-[#a2b86c]" /> : <Copy className="h-3.5 w-3.5" />}
         </button>
       </div>
     </div>
