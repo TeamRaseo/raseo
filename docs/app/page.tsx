@@ -46,7 +46,7 @@ export default function HomePage() {
 
           <div className="flex items-center gap-3">
             <a
-              href="https://github.com/TeamRaseo/raseo-sdk"
+              href="https://github.com/TeamRaseo/raseo"
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-[#EAECE0] dark:border-[#262e1f] bg-[#FFFFFF] dark:bg-[#181e14] hover:bg-[#EAECE0] dark:hover:bg-[#1c2217] text-neutral-800 dark:text-neutral-200 transition-all shadow-sm"
@@ -216,7 +216,7 @@ export default function HomePage() {
             <div className="flex items-center gap-6">
               <Link href="/docs" className="hover:text-[#889A56] dark:hover:text-[#a2b86c] transition-colors">Docs</Link>
               <Link href="/docs/getting-started/quickstart" className="hover:text-[#889A56] dark:hover:text-[#a2b86c] transition-colors">Quickstart</Link>
-              <a href="https://github.com/TeamRaseo/raseo-sdk" target="_blank" rel="noreferrer" className="hover:text-[#889A56] dark:hover:text-[#a2b86c] transition-colors">GitHub</a>
+              <a href="https://github.com/TeamRaseo/raseo" target="_blank" rel="noreferrer" className="hover:text-[#889A56] dark:hover:text-[#a2b86c] transition-colors">GitHub</a>
             </div>
           </div>
         </footer>

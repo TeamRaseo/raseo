@@ -23,7 +23,7 @@ export default function RootDocsLayout({ children }: { children: ReactNode }) {
       links={[
         {
           text: 'GitHub',
-          url: 'https://github.com/TeamRaseo/raseo-sdk',
+          url: 'https://github.com/TeamRaseo/raseo',
           external: true,
         },
       ]}

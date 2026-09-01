@@ -92,17 +92,74 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Code block exact styling */
-pre, .nd-codeblock {
+/* ========================================================
+   FUMADOCS MDX CODE BLOCKS (Shiki)
+   ======================================================== */
+
+.shiki:not(.not-fumadocs-codeblock *),
+.nd-codeblock,
+figure[data-rehype-pretty-code-figure] pre {
   background-color: #1E293C !important;
-  color: #F3F5EB !important;
-  border: 1px solid rgba(234, 236, 224, 0.12) !important;
+  border: 1px solid rgba(234, 236, 224, 0.15) !important;
+  border-radius: 0.75rem;
 }
 
-.dark pre, .dark .nd-codeblock {
-  background-color: #141c29 !important;
-  color: #F3F5EB !important;
-  border: 1px solid rgba(162, 184, 108, 0.15) !important;
+/* Ensure Shiki tokens use dark-shiki colors against the #1E293C code block */
+.shiki:not(.not-fumadocs-codeblock *) code span {
+  color: var(--shiki-dark);
+}
+
+/* Inline code in prose/paragraphs */
+:not(pre) > code {
+  background-color: #EAECE0;
+  color: #374025;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.375rem;
+  font-size: 0.875em;
+  font-family: var(--font-jetbrains-mono), monospace;
+  border: 1px solid rgba(55, 64, 37, 0.15);
+}
+
+.dark :not(pre) > code {
+  background-color: #1c2217;
+  color: #a2b86c;
+  border: 1px solid #262e1f;
+}
+
+/* ========================================================
+   GLOBAL COPY BUTTON STYLING (ALL TERMINALS & CODE BLOCKS)
+   Ensure cursor: pointer on ALL copy buttons & show "Copied"
+   ======================================================== */
+
+button[aria-label*="Copy" i],
+button[aria-label*="Copied" i],
+button[title*="Copy" i],
+button[title*="Copied" i],
+figure button,
+.shiki button,
+.nd-codeblock button {
+  cursor: pointer !important;
+}
+
+/* Show 'Copied' text on Fumadocs code block copy button when copied */
+figure button[data-checked],
+.shiki button[data-checked],
+.nd-codeblock button[data-checked] {
+  width: auto !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.6rem !important;
+  cursor: pointer !important;
+}
+
+figure button[data-checked]::after,
+.shiki button[data-checked]::after,
+.nd-codeblock button[data-checked]::after {
+  content: "Copied";
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-sans), sans-serif;
+  color: #a2b86c;
 }
 
 /* Custom Scrollbar */
