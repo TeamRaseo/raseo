@@ -76,8 +76,8 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-black dark:text-[#F3F5EB] leading-tight sm:leading-none">
-            The open-source AI Agent SDK{' '}
-            <span className="block mt-2 olive-gradient-text">built for TypeScript.</span>
+            The open-source TypeScript{' '}
+            <span className="block mt-2 olive-gradient-text">SDK for AI agents.</span>
           </h1>
 
           <p className="mt-6 text-base sm:text-lg text-neutral-700 dark:text-neutral-300 max-w-2xl mx-auto leading-relaxed">
